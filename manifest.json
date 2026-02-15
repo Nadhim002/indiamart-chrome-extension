@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Indiamart Buy Lead Auto-Refresh",
+  "version": "1.0.0",
+  "description": "Refresh at interval, extract lead data from list_1/list1, check criteria, and click Contact Buyer Now when matched.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["*://*.indiamart.com/*", "*://*.seller.indiamart.com/*"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Indiamart Auto-Refresh"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.indiamart.com/*", "*://*.seller.indiamart.com/*"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

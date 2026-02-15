@@ -1,0 +1,189 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  color: #333;
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #999;
+  flex-shrink: 0;
+}
+
+.status-indicator.running {
+  background: #2aa699;
+}
+
+.countdown {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.countdown.running {
+  color: #2aa699;
+  font-weight: 500;
+}
+
+.header-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  text-decoration: none;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.header-icon:hover {
+  color: #333;
+  background: #eee;
+}
+
+.container {
+  padding: 14px 16px;
+}
+
+h1 {
+  font-size: 16px;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.section {
+  margin-bottom: 14px;
+}
+
+.section:last-of-type {
+  margin-bottom: 16px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.row label span {
+  white-space: nowrap;
+}
+
+.field {
+  margin-bottom: 10px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+label span {
+  margin-right: 6px;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 100%;
+  max-width: 120px;
+}
+
+input[type="text"] {
+  max-width: 180px;
+}
+
+select {
+  max-width: 110px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #2aa699;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #259086;
+}
+
+.btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #d0d0d0;
+}
+
+.status {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.status.running {
+  color: #2aa699;
+  font-weight: 500;
+}
