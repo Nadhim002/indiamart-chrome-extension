@@ -12,7 +12,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.indiamart.com/*", "*://*.seller.indiamart.com/*"],
-      "js": ["content/content.js"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ]
