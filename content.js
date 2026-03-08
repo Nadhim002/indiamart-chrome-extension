@@ -154,6 +154,8 @@
   // Main function to scan and extract leads
   function scanLeads(settings) {
     try {
+      console.log('Starting lead scan with settings:', settings);
+
       const leadCards = document.querySelectorAll('#bl_listing [id^="list"]');
 
       if (leadCards.length === 0) {
@@ -161,17 +163,31 @@
         return [];
       }
 
+      console.log(`Found ${leadCards.length} lead cards to process`);
+
       const leads = [];
 
       leadCards.forEach((card, index) => {
         const cardId = `list${index + 1}`;
+        console.log(`Processing card ${cardId}`);
+
         const leadInfo = extractLeadInfo(card, cardId);
 
-        if (leadInfo && isLeadMatch(leadInfo, settings)) {
-          leads.push(leadInfo);
+        if (leadInfo) {
+          console.log(`Card ${cardId} info extracted:`, leadInfo);
+
+          if (isLeadMatch(leadInfo, settings)) {
+            console.log(`Card ${cardId} matches criteria and will be included`);
+            leads.push(leadInfo);
+          } else {
+            console.log(`Card ${cardId} does not match criteria`);
+          }
+        } else {
+          console.log(`Failed to extract info from card ${cardId}`);
         }
       });
 
+      console.log(`Scan complete. Found ${leads.length} matching leads`);
       return leads;
     } catch (error) {
       console.error('Error scanning leads:', error);
@@ -181,6 +197,7 @@
 
   // Function to send leads to popup
   function sendLeadsToPopup(leads) {
+    console.log('Sending leads to popup:', leads);
     chrome.runtime.sendMessage({
       action: 'updateLeads',
       leads: leads

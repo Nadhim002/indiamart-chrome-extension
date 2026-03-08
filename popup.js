@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
       displayLeads(request.leads);
     } else if (request.action === 'updateStatus') {
       updateStatus(request.status, request.isRunning);
+    } else if (request.action === 'updateTimer') {
+      // Update timer when received from background script
+      document.getElementById('timer').textContent = `Timer: ${request.timeLeft}s`;
     }
   });
 

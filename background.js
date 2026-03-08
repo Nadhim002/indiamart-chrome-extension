@@ -45,6 +45,10 @@ function startScraping(settings) {
   }, settings.refreshInterval * 1000);
 
   // Update timer display
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+
   timerInterval = setInterval(() => {
     if (timeLeft > 0) {
       timeLeft--;
@@ -52,6 +56,10 @@ function startScraping(settings) {
         action: 'updateTimer',
         timeLeft: timeLeft
       });
+    } else {
+      // Timer reached zero, reset it and trigger a new scan
+      timeLeft = settings.refreshInterval;
+      scanLeads(settings);
     }
   }, 1000);
 
@@ -87,6 +95,8 @@ function stopScraping() {
 
 // Scan for leads
 function scanLeads(settings) {
+  console.log('Starting lead scan with settings:', settings);
+
   // Send message to content script to scan for leads
   chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
     if (tabs.length > 0) {
