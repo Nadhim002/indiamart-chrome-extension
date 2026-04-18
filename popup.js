@@ -78,6 +78,12 @@ async function init() {
     updateTimer(0);
   });
 
+  document.getElementById('btnReset').addEventListener('click', async () => {
+    populateForm(DEFAULTS);
+    saveSettings(DEFAULTS);
+    await sendToBackground({ type: 'SAVE_SETTINGS', settings: DEFAULTS });
+  });
+
   ['refreshInterval', 'minTimePassed', 'minOrderQty', 'minOrderValue'].forEach(id => {
     document.getElementById(id).addEventListener('change', async () => {
       const s = readFormSettings();
