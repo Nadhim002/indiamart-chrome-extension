@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IndiaMART Lead Buyer</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>IndiaMART Lead Buyer</h1>
+
+    <div class="timer-box" id="timerBox">
+      <span class="timer-label">Next refresh in</span>
+      <span class="timer-value" id="timerValue">--</span>
+      <span class="timer-unit">sec</span>
+    </div>
+
+    <div class="status-row">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Stopped</span>
+    </div>
+
+    <div class="settings">
+      <label>
+        Refresh Interval (sec)
+        <input type="number" id="refreshInterval" min="5" value="15" />
+      </label>
+      <label>
+        Min Time Passed (min)
+        <input type="number" id="minTimePassed" min="1" value="10" />
+      </label>
+      <label>
+        Min Order Qty (pcs)
+        <input type="number" id="minOrderQty" min="1" value="100" />
+      </label>
+      <label>
+        Min Order Value (Rs)
+        <input type="number" id="minOrderValue" min="0" value="20000" />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="btnStart" class="btn btn-start">Start</button>
+      <button id="btnStop" class="btn btn-stop" disabled>Stop</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

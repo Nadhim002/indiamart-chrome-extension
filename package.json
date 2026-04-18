@@ -1,0 +1,16 @@
+{
+  "name": "indiamart-lead-buyer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testMatch": ["**/tests/**/*.test.js"],
+    "testEnvironment": "node"
+  }
+}
