@@ -62,6 +62,5 @@ Once u buy the lead U sen notify by doing something add that funtion which accep
 
 The Extesnion should have UI to info from user in minimal styling
 Should have also start and stop button for refreshing and running checks
-Heave timer UI running on the top telling how much time running before executing the next refresh
-
-Having both Light and
+Heve timer UI running on the top telling how much time running before executing the next refresh
+The Cycle should repeat everytime time ends , refresh the tab , wait for bl_listing id check the criteria matching if matches buy or els wait for timer to end and refresh again
