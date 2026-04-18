@@ -1,5 +1,4 @@
 const ALARM_NAME = 'lead-refresh';
-const TICK_ALARM = 'tick';
 
 const DEFAULTS = {
   refreshInterval: 15,
@@ -8,40 +7,25 @@ const DEFAULTS = {
   minOrderValue: 20000,
 };
 
-let tickInterval = null;
-let secondsRemaining = 0;
-
 async function getState() {
-  const data = await chrome.storage.local.get(['running', 'settings', 'secondsRemaining']);
+  const data = await chrome.storage.local.get(['running', 'settings', 'cycleStartTime']);
   return {
     running: data.running || false,
     settings: { ...DEFAULTS, ...(data.settings || {}) },
-    secondsRemaining: data.secondsRemaining || 0,
+    cycleStartTime: data.cycleStartTime || null,
   };
 }
 
-async function broadcastTick(seconds) {
-  await chrome.storage.local.set({ secondsRemaining: seconds });
-  const views = chrome.extension.getViews({ type: 'popup' });
-  views.forEach(view => {
-    if (view.onTick) view.onTick(seconds);
-  });
-}
-
 async function startCycle(settings) {
-  secondsRemaining = settings.refreshInterval;
-  await chrome.storage.local.set({ running: true, settings, secondsRemaining });
-  await broadcastTick(secondsRemaining);
-
+  const cycleStartTime = Date.now();
+  await chrome.storage.local.set({ running: true, settings, cycleStartTime });
+  chrome.alarms.clear(ALARM_NAME);
   chrome.alarms.create(ALARM_NAME, { delayInMinutes: settings.refreshInterval / 60 });
-  chrome.alarms.create(TICK_ALARM, { periodInMinutes: 1 / 60 }); // fires every ~1 sec
 }
 
 async function stopCycle() {
-  await chrome.storage.local.set({ running: false, secondsRemaining: 0 });
+  await chrome.storage.local.set({ running: false, cycleStartTime: null });
   chrome.alarms.clear(ALARM_NAME);
-  chrome.alarms.clear(TICK_ALARM);
-  await broadcastTick(0);
 }
 
 async function refreshAndCheck(settings) {
@@ -49,14 +33,11 @@ async function refreshAndCheck(settings) {
   if (tabs.length === 0) return;
 
   const tab = tabs[0];
-
-  // Reload tab and wait for complete, then send CHECK
   chrome.tabs.reload(tab.id);
 
   const onUpdated = (tabId, changeInfo) => {
     if (tabId === tab.id && changeInfo.status === 'complete') {
       chrome.tabs.onUpdated.removeListener(onUpdated);
-      // Small delay to let page JS render the listing
       setTimeout(() => {
         chrome.tabs.sendMessage(tab.id, { type: 'CHECK', settings });
       }, 1500);
@@ -66,22 +47,14 @@ async function refreshAndCheck(settings) {
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== ALARM_NAME) return;
   const { running, settings } = await getState();
   if (!running) return;
 
-  if (alarm.name === TICK_ALARM) {
-    secondsRemaining = Math.max(0, secondsRemaining - 1);
-    await broadcastTick(secondsRemaining);
-    return;
-  }
-
-  if (alarm.name === ALARM_NAME) {
-    await refreshAndCheck(settings);
-    // Restart cycle
-    secondsRemaining = settings.refreshInterval;
-    await broadcastTick(secondsRemaining);
-    chrome.alarms.create(ALARM_NAME, { delayInMinutes: settings.refreshInterval / 60 });
-  }
+  await refreshAndCheck(settings);
+  // Reset cycle start time and schedule next alarm
+  await chrome.storage.local.set({ cycleStartTime: Date.now() });
+  chrome.alarms.create(ALARM_NAME, { delayInMinutes: settings.refreshInterval / 60 });
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -107,17 +80,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const state = await getState();
       sendResponse(state);
     } else if (message.type === 'LEAD_BOUGHT') {
-      // No-op for now; payload available in message.payload
       sendResponse({ ok: true });
     }
   })();
-  return true; // keep message channel open for async response
+  return true;
 });
 
-// On service worker start, resume tick if was running
 chrome.runtime.onStartup.addListener(async () => {
   const { running, settings } = await getState();
-  if (running) {
-    await startCycle(settings);
-  }
+  if (running) await startCycle(settings);
 });

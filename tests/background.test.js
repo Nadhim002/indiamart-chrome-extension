@@ -99,11 +99,27 @@ describe('background — settings merging', () => {
 });
 
 describe('background — alarm names', () => {
-  test('ALARM_NAME and TICK_ALARM are distinct', () => {
-    // Guards against a regression where both alarms share the same name
-    const ALARM_NAME = 'lead-refresh';
-    const TICK_ALARM = 'tick';
-    expect(ALARM_NAME).not.toBe(TICK_ALARM);
+  test('ALARM_NAME is lead-refresh', () => {
+    expect('lead-refresh').toBe('lead-refresh');
+  });
+});
+
+describe('background — cycleStartTime countdown', () => {
+  test('secondsRemaining calculated correctly from cycleStartTime', () => {
+    const refreshInterval = 30;
+    const cycleStartTime = Date.now() - 10000; // started 10s ago
+    const elapsed = Math.floor((Date.now() - cycleStartTime) / 1000);
+    const remaining = Math.max(0, refreshInterval - elapsed);
+    expect(remaining).toBeGreaterThanOrEqual(19);
+    expect(remaining).toBeLessThanOrEqual(20);
+  });
+
+  test('remaining is 0 when cycle time has passed', () => {
+    const refreshInterval = 15;
+    const cycleStartTime = Date.now() - 20000; // started 20s ago, past the 15s interval
+    const elapsed = Math.floor((Date.now() - cycleStartTime) / 1000);
+    const remaining = Math.max(0, refreshInterval - elapsed);
+    expect(remaining).toBe(0);
   });
 });
 

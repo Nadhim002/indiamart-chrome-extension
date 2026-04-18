@@ -37,28 +37,16 @@ function populateForm(settings) {
 }
 
 function setRunningUI(running) {
-  const dot = document.getElementById('statusDot');
-  const text = document.getElementById('statusText');
-  const btnStart = document.getElementById('btnStart');
-  const btnStop = document.getElementById('btnStop');
-  const timerBox = document.getElementById('timerBox');
-
-  dot.className = 'status-dot ' + (running ? 'running' : '');
-  text.textContent = running ? 'Running' : 'Stopped';
-  btnStart.disabled = running;
-  btnStop.disabled = !running;
-  timerBox.className = 'timer-box ' + (running ? 'active' : '');
+  document.getElementById('statusDot').className = 'status-dot ' + (running ? 'running' : '');
+  document.getElementById('statusText').textContent = running ? 'Running' : 'Stopped';
+  document.getElementById('btnStart').disabled = running;
+  document.getElementById('btnStop').disabled = !running;
+  document.getElementById('timerBox').className = 'timer-box ' + (running ? 'active' : '');
 }
 
 function updateTimer(seconds) {
-  const el = document.getElementById('timerValue');
-  el.textContent = seconds > 0 ? seconds : '--';
+  document.getElementById('timerValue').textContent = seconds > 0 ? seconds : '--';
 }
-
-// Called by background service worker via direct reference
-window.onTick = function(seconds) {
-  updateTimer(seconds);
-};
 
 async function sendToBackground(message) {
   return new Promise((resolve) => {
@@ -70,20 +58,18 @@ async function init() {
   const settings = loadSettings();
   populateForm(settings);
 
-  // Sync state from background
+  // Sync initial state from background
   const state = await sendToBackground({ type: 'GET_STATE' });
   if (state) {
     setRunningUI(state.running);
-    updateTimer(state.secondsRemaining || 0);
     if (state.settings) populateForm({ ...settings, ...state.settings });
   }
 
   document.getElementById('btnStart').addEventListener('click', async () => {
-    const settings = readFormSettings();
-    saveSettings(settings);
-    await sendToBackground({ type: 'START', settings });
+    const s = readFormSettings();
+    saveSettings(s);
+    await sendToBackground({ type: 'START', settings: s });
     setRunningUI(true);
-    updateTimer(settings.refreshInterval);
   });
 
   document.getElementById('btnStop').addEventListener('click', async () => {
@@ -92,21 +78,27 @@ async function init() {
     updateTimer(0);
   });
 
-  // Auto-save settings on change
   ['refreshInterval', 'minTimePassed', 'minOrderQty', 'minOrderValue'].forEach(id => {
     document.getElementById(id).addEventListener('change', async () => {
-      const settings = readFormSettings();
-      saveSettings(settings);
-      await sendToBackground({ type: 'SAVE_SETTINGS', settings });
+      const s = readFormSettings();
+      saveSettings(s);
+      await sendToBackground({ type: 'SAVE_SETTINGS', settings: s });
     });
   });
 
-  // Poll for tick updates (fallback since getViews may not always work)
+  // Compute countdown locally every second from cycleStartTime stored in background
   setInterval(async () => {
     const state = await sendToBackground({ type: 'GET_STATE' });
-    if (state) {
-      setRunningUI(state.running);
-      updateTimer(state.secondsRemaining || 0);
+    if (!state) return;
+
+    setRunningUI(state.running);
+
+    if (state.running && state.cycleStartTime && state.settings) {
+      const elapsed = Math.floor((Date.now() - state.cycleStartTime) / 1000);
+      const remaining = Math.max(0, state.settings.refreshInterval - elapsed);
+      updateTimer(remaining);
+    } else if (!state.running) {
+      updateTimer(0);
     }
   }, 1000);
 }
