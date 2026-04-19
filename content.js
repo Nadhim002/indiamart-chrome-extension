@@ -1,5 +1,12 @@
 const LOCATION_KEYWORDS = ['Tamil Nadu', 'Karnataka', 'Andhra', 'Kerala'];
 
+function log(...args) {
+  console.log('[LB:cs]', new Date().toLocaleTimeString(), ...args);
+}
+function warn(...args) {
+  console.warn('[LB:cs]', new Date().toLocaleTimeString(), ...args);
+}
+
 function parseDurationToMinutes(text) {
   const t = text.trim().toLowerCase();
   if (t === 'yesterday') return 1440;
@@ -15,7 +22,6 @@ function parseDurationToMinutes(text) {
 }
 
 function parseOrderValue(text) {
-  // e.g. "Rs. 40,000 - 48,000" or "Rs. 1 to 2 Lakh" (Lakh may only appear on second part)
   const clean = text.replace(/Rs\.?\s*/i, '').trim();
   const isLakh = /lakh/i.test(clean);
   const parts = clean.split(/\s*(?:-|to)\s*/i);
@@ -35,7 +41,6 @@ function extractCardData(cardEl, n) {
   const stateEl = cardEl.querySelector(`#card_state_${n}`);
   const state = stateEl ? stateEl.value : '';
 
-  // Duration: clock icon is in .lstNwLftLoc, look for strong tag
   let durationText = '';
   const locDivs = cardEl.querySelectorAll('.lstNwLftLoc');
   for (const div of locDivs) {
@@ -44,7 +49,6 @@ function extractCardData(cardEl, n) {
       durationText = strong.textContent.trim();
       break;
     }
-    // Also check plain <p><strong>0 sec</strong></p>
     const p = div.querySelector('p');
     if (p) {
       const s = p.querySelector('strong');
@@ -78,37 +82,61 @@ function extractCardData(cardEl, n) {
 function matchesCriteria(data, settings) {
   const durationMinutes = parseDurationToMinutes(data.durationText);
 
-  if (durationMinutes >= settings.minTimePassed) return false;
+  if (durationMinutes >= settings.minTimePassed) {
+    log(`  SKIP ${data.cardId} — too old: ${data.durationText} (${durationMinutes}min >= ${settings.minTimePassed}min)`);
+    return false;
+  }
 
   const valueOk = data.quantity >= settings.minOrderQty || data.orderValue >= settings.minOrderValue;
-  if (!valueOk) return false;
+  if (!valueOk) {
+    log(`  SKIP ${data.cardId} — value too low: qty=${data.quantity} value=₹${data.orderValue}`);
+    return false;
+  }
 
   const locationOk = LOCATION_KEYWORDS.some(kw =>
     data.state.toLowerCase().includes(kw.toLowerCase())
   );
-  if (!locationOk) return false;
+  if (!locationOk) {
+    log(`  SKIP ${data.cardId} — location not matched: "${data.state}"`);
+    return false;
+  }
 
   return true;
 }
 
 function onLeadBought(leadPayload) {
-  // Future: send notification, log, etc.
+  log('Lead bought:', leadPayload);
 }
 
 function processCards(settings) {
   const listing = document.getElementById('bl_listing');
-  if (!listing) return;
+  if (!listing) {
+    warn('processCards called but #bl_listing not found in DOM');
+    return;
+  }
 
   const cards = listing.querySelectorAll('[id^="list"]');
+  log(`Processing ${cards.length} card(s) — settings: minTimePassed=${settings.minTimePassed}min, minOrderQty=${settings.minOrderQty}, minOrderValue=₹${settings.minOrderValue}`);
+
+  let bought = 0;
+  let skipped = 0;
+
   cards.forEach(card => {
     const match = card.id.match(/^list(\d+)$/);
     if (!match) return;
     const n = match[1];
     const data = extractCardData(card, n);
 
+    log(`  Card ${data.cardId}: state="${data.state}" duration="${data.durationText}" qty=${data.quantity} value=₹${data.orderValue} btnFound=${!!data.ctaBtn}`);
+
     if (matchesCriteria(data, settings)) {
-      console.log('[LeadBuyer] Buying lead:', data.cardId, data.state, data.durationText);
-      if (data.ctaBtn) data.ctaBtn.click();
+      if (data.ctaBtn) {
+        log(`  BUY ${data.cardId} — clicking CTA button`);
+        data.ctaBtn.click();
+        bought++;
+      } else {
+        warn(`  MATCH ${data.cardId} — criteria met but CTA button not found in DOM`);
+      }
       onLeadBought({
         cardId: data.cardId,
         state: data.state,
@@ -118,26 +146,32 @@ function processCards(settings) {
         timestamp: Date.now(),
       });
     } else {
-      console.log('[LeadBuyer] Skipping lead:', data.cardId, data.state, data.durationText);
+      skipped++;
     }
   });
+
+  log(`Cycle complete — bought: ${bought}, skipped: ${skipped}, total: ${cards.length}`);
 }
 
 function waitForListing(settings, timeout = 10000) {
   return new Promise((resolve) => {
     if (document.getElementById('bl_listing')) {
+      log('Listing (#bl_listing) already in DOM');
       resolve();
       return;
     }
+    log('Waiting for #bl_listing to appear in DOM...');
     const interval = setInterval(() => {
       if (document.getElementById('bl_listing')) {
         clearInterval(interval);
+        log('#bl_listing found');
         resolve();
       }
     }, 500);
     setTimeout(() => {
       clearInterval(interval);
-      resolve(); // proceed even if not found
+      warn('#bl_listing not found within timeout — proceeding anyway');
+      resolve();
     }, timeout);
   });
 }
@@ -150,6 +184,7 @@ let originalTitle = null;
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CHECK') {
+    log('CHECK received — tab visibility:', document.visibilityState);
     waitForListing(message.settings).then(() => {
       processCards(message.settings);
       sendResponse({ ok: true });
