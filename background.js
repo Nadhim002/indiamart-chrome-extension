@@ -91,15 +91,6 @@ async function refreshAndCheck(settings) {
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   log(`Current active tab: id=${activeTab?.id} title="${activeTab?.title}"`);
 
-  // Check if the window is minimized — minimized windows keep visibilityState "hidden"
-  // which prevents IndiaMART from rendering cards in the DOM
-  const win = await chrome.windows.get(tab.windowId);
-  const wasMinimized = win.state === 'minimized';
-  if (wasMinimized) {
-    log(`Window ${tab.windowId} is minimized — restoring so page becomes visible`);
-    await chrome.windows.update(tab.windowId, { state: 'normal' });
-  }
-
   log(`Reloading tab ${tab.id}`);
   chrome.tabs.reload(tab.id);
 
@@ -120,10 +111,6 @@ async function refreshAndCheck(settings) {
           if (activeTab && activeTab.id !== tab.id) {
             log(`Switching back to previous tab: id=${activeTab.id}`);
             chrome.tabs.update(activeTab.id, { active: true });
-          }
-          if (wasMinimized) {
-            log(`Re-minimizing window ${tab.windowId}`);
-            chrome.windows.update(tab.windowId, { state: 'minimized' });
           }
         });
       }, 1500);

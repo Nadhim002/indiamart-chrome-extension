@@ -9,8 +9,7 @@
     "scripting",
     "storage",
     "alarms",
-    "offscreen",
-    "windows"
+    "offscreen"
   ],
   "host_permissions": [
     "https://seller.indiamart.com/*"
@@ -22,6 +21,12 @@
     "default_popup": "popup.html"
   },
   "content_scripts": [
+    {
+      "matches": ["https://seller.indiamart.com/*"],
+      "js": ["visibility-override.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": ["https://seller.indiamart.com/*"],
       "js": ["content.js"]
