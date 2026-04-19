@@ -67,14 +67,27 @@ async function refreshAndCheck(settings) {
   }
 
   const tab = tabs[0];
+
+  // Remember which tab was active so we can switch back after
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
   chrome.tabs.reload(tab.id);
 
   const onUpdated = (tabId, changeInfo) => {
     if (tabId === tab.id && changeInfo.status === 'complete') {
       chrome.tabs.onUpdated.removeListener(onUpdated);
-      setTimeout(() => {
-        chrome.tabs.sendMessage(tab.id, { type: 'CHECK', settings });
-      }, 1500);
+
+      // Activate the IndiaMART tab so clicks register and page renders fully
+      chrome.tabs.update(tab.id, { active: true }, () => {
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tab.id, { type: 'CHECK', settings }, () => {
+            // Switch back to whatever tab the user was on
+            if (activeTab && activeTab.id !== tab.id) {
+              chrome.tabs.update(activeTab.id, { active: true });
+            }
+          });
+        }, 1500);
+      });
     }
   };
   chrome.tabs.onUpdated.addListener(onUpdated);
