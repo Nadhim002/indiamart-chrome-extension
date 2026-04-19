@@ -9,7 +9,8 @@
     "scripting",
     "storage",
     "alarms",
-    "offscreen"
+    "offscreen",
+    "windows"
   ],
   "host_permissions": [
     "https://seller.indiamart.com/*"
