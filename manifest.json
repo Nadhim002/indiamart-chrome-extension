@@ -8,7 +8,8 @@
     "activeTab",
     "scripting",
     "storage",
-    "alarms"
+    "alarms",
+    "offscreen"
   ],
   "host_permissions": [
     "https://seller.indiamart.com/*"

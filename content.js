@@ -146,6 +146,8 @@ if (typeof module !== 'undefined') {
   module.exports = { parseDurationToMinutes, parseOrderValue, parseQuantity, extractCardData, matchesCriteria };
 }
 
+let originalTitle = null;
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CHECK') {
     waitForListing(message.settings).then(() => {
@@ -153,5 +155,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ ok: true });
     });
     return true;
+  }
+
+  if (message.type === 'UPDATE_TITLE') {
+    if (originalTitle === null) originalTitle = document.title;
+    if (message.remaining === null) {
+      document.title = originalTitle;
+      originalTitle = null;
+    } else {
+      document.title = `[${message.remaining}s] ${originalTitle}`;
+    }
+    sendResponse({ ok: true });
   }
 });
