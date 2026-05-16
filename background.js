@@ -91,8 +91,8 @@ async function refreshAndCheck(settings) {
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   log(`Current active tab: id=${activeTab?.id} title="${activeTab?.title}"`);
 
-  log(`Reloading tab ${tab.id}`);
-  chrome.tabs.reload(tab.id);
+  log(`Navigating tab ${tab.id} to target URL`);
+  chrome.tabs.update(tab.id, { url: 'https://seller.indiamart.com/bltxn/?pref=recent' });
 
   const onUpdated = (tabId, changeInfo) => {
     if (tabId !== tab.id || changeInfo.status !== 'complete') return;
